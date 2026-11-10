@@ -1,0 +1,1 @@
+worker: python monika_bot.py
