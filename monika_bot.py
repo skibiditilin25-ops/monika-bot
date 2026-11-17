@@ -3,11 +3,13 @@ import random
 import discord
 from groq import Groq
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TARGET_CHANNEL_ID = int(os.getenv("TARGET_CHANNEL_ID", "0"))
-groq_client = Groq(api_key=GROQ_API_KEY)
+ºgroq_client = Groq(api_key=GROQ_API_KEY)
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -87,6 +89,18 @@ async def on_message(message):
     except Exception as e:
       print(f"Error detallado: {e}")
       await message.channel.send("Error al conectar con mi mente...")
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Monika is alive!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
+
+threading.Thread(target=run_web_server, daemon=True).start()
 
 
 discord_client.run(DISCORD_TOKEN)
